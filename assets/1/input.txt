@@ -1,1 +1,1 @@
-"{\n  \"title\": \"example glossary\"\n}"
+{\n  \"title\": \"example glossary\"\n}

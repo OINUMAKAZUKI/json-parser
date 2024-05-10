@@ -22,4 +22,12 @@ describe('', () => {
     const { input, output } = getFilePair(2);
     expect(parse(input)).toEqual(output);
   });
+  test('3', () => {
+    const { input, output } = getFilePair(3);
+    expect(parse(input)).toEqual(output);
+  });
+  test('4', () => {
+    const { input, output } = getFilePair(4);
+    expect(parse(input)).toEqual(output);
+  });
 });
