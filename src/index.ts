@@ -1,21 +1,23 @@
-// brace
+// Constants
 const SBC = "{";
 const EBC = "}";
-// bracket
 const SBK = "[";
 const EBK = "]";
-// split
 const SP = ",";
-const EOL = "\n";
-// double quote
 const DQ = '"';
+const COLON = ':';
 
-export const parse = (str: string) => {
-  if (str == null || str == "null") {
+// Main parse function
+export const parse = (str: string): any => {
+  // Handle escaped JSON strings
+  if (str.startsWith('"') && str.endsWith('"')) {
+    str = JSON.parse(str);
+  }
+
+  if (str == null || str === "null") {
     return null;
   }
-  str = cleanString(str);
-  console.log(str);
+  str = str.trim();
   if (!isNaN(Number(str))) {
     return Number(str);
   }
@@ -25,39 +27,104 @@ export const parse = (str: string) => {
   if (str === "false") {
     return false;
   }
-  if (!str.includes("{")) {
-    return str.trim().split(EOL)[0];
+  // オブジェクトor配列の場合はパース処理を行う
+  str = cleanString(str);
+  if (str.startsWith(SBK) && str.endsWith(EBK)) {
+    return parseArray(str);
   }
-  // 最初と最後が{}で囲まれている場合
   if (str.startsWith(SBC) && str.endsWith(EBC)) {
     return parseObject(str);
   }
-  return {};
+  return str;
 };
 
-// 文字を整形する
-const cleanString = (str: string) => {
-  str = str.trim();
-  if (str.startsWith(DQ)) {
+// Clean string
+const cleanString = (str: string): string => {
+  if (str.startsWith(DQ) && str.endsWith(DQ)) {
     str = str.slice(1, -1);
-  }
-  if (str.endsWith(DQ)) {
-    str = str.slice(0, -1);
   }
   return removeEscapes(str);
 };
 
-const parseObject = (str: string) => {
-  str = str.slice(1, -1);
-  const obj = {};
-  const lines = str.split(SP);
-  lines.forEach((line) => {
-    const [key, value] = line.split(":");
-    obj[key.trim()] = parse(value);
-  });
+// Parse JSON object
+const parseObject = (str: string): object => {
+  str = str.slice(1, -1).trim();
+  const obj: { [key: string]: any } = {};
+  let depth = 0;
+  let start = 0;
+  let inString = false;
+  let key: string | null = null;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+
+    if (char === DQ) {
+      inString = !inString;
+    }
+
+    if (!inString) {
+      if (char === SBC || char === SBK) {
+        depth++;
+      }
+      if (char === EBC || char === EBK) {
+        depth--;
+      } 
+      if (char === COLON && depth === 0) {
+        key = cleanString(str.slice(start, i).trim());
+        start = i + 1;
+      } 
+      if ((char === SP && depth === 0) || i === str.length - 1) {
+        const end = i === str.length - 1 ? i + 1 : i;
+        const value = str.slice(start, end).trim();
+        if (key !== null) {
+          obj[key] = parse(value);
+          key = null;
+        }
+        start = i + 1;
+      }
+    }
+  }
   return obj;
 };
 
-const removeEscapes = (str: string) => {
-  return str.replace(/\\(["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, "");
+// Parse JSON array
+const parseArray = (str: string): any[] => {
+  str = str.slice(1, -1).trim();
+  const arr: any[] = [];
+  let depth = 0;
+  let start = 0;
+  let inString = false;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+
+    if (char === DQ) {
+      inString = !inString;
+    }
+
+    if (!inString) {
+      if (char === SBC || char === SBK) {
+        depth++;
+      }
+      if (char === EBC || char === EBK) {
+        depth--;
+      }
+      if ((char === SP && depth === 0) || i === str.length - 1) {
+        const end = i === str.length - 1 ? i + 1 : i;
+        const value = str.slice(start, end).trim();
+        arr.push(parse(value));
+        start = i + 1;
+      }
+    }
+  }
+  return arr;
+};
+
+// Remove escape characters
+const removeEscapes = (str: string): string => {
+  return str.replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t')
+            .replace(/\\r/g, '\r')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
 };
