@@ -9,10 +9,10 @@ const COLON = ":";
 
 // Main parse function
 export const parse = (str: string): any => {
+  str = str.trim();
   if (str == null || str === "null") {
     return null;
   }
-  str = str.trim();
   if (!isNaN(Number(str))) {
     return Number(str);
   }
