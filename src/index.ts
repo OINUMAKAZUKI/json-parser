@@ -5,15 +5,10 @@ const SBK = "[";
 const EBK = "]";
 const SP = ",";
 const DQ = '"';
-const COLON = ':';
+const COLON = ":";
 
 // Main parse function
 export const parse = (str: string): any => {
-  // Handle escaped JSON strings
-  if (str.startsWith('"') && str.endsWith('"')) {
-    str = JSON.parse(str);
-  }
-
   if (str == null || str === "null") {
     return null;
   }
@@ -68,11 +63,11 @@ const parseObject = (str: string): object => {
       }
       if (char === EBC || char === EBK) {
         depth--;
-      } 
+      }
       if (char === COLON && depth === 0) {
         key = cleanString(str.slice(start, i).trim());
         start = i + 1;
-      } 
+      }
       if ((char === SP && depth === 0) || i === str.length - 1) {
         const end = i === str.length - 1 ? i + 1 : i;
         const value = str.slice(start, end).trim();
@@ -122,9 +117,10 @@ const parseArray = (str: string): any[] => {
 
 // Remove escape characters
 const removeEscapes = (str: string): string => {
-  return str.replace(/\\n/g, '\n')
-            .replace(/\\t/g, '\t')
-            .replace(/\\r/g, '\r')
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\');
+  return str
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\\r/g, "\r")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\");
 };
